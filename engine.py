@@ -156,6 +156,22 @@ class camera(point):
         self.transform = self.rotation @ self.position
     
     def projection(self, obj, screen_size: list) -> list:
+        self.position = np.array([
+           [1.0, 0.0, 0.0, -self.pos[0, 0]],
+           [0.0, 1.0, 0.0, -self.pos[1, 0]],
+           [0.0, 0.0, 1.0, -self.pos[2, 0]],
+           [0.0, 0.0, 0.0, 1.0]
+        ], dtype=np.float32)
+        
+        self.rotation = np.array([
+            [self.rightvector[0], self.rightvector[1], self.rightvector[2], 0.0],
+            [self.upvector[0], self.upvector[1], self.upvector[2], 0],
+            [self.lookvector[0], self.lookvector[1], self.lookvector[2], 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ], dtype=np.float32)
+        
+        self.transform = self.rotation @ self.position
+
         f = 1 / np.tan(np.radians(self.angle)/2)
         aspect = screen_size[0] / screen_size[1]
         project = np.array([
@@ -172,6 +188,9 @@ class camera(point):
         result_primary = mvp @ local_primary
         result_end = mvp @ local_end
 
+        if result_primary[3, 0] == 0: result_primary[3, 0] = 1e-6
+        if result_end[3, 0] == 0: result_end[3, 0] = 1e-6
+        
         screenx_primary = result_primary[0, 0] / result_primary[3, 0]
         screeny_primary = result_primary[1, 0] / result_primary[3, 0]
         
