@@ -31,9 +31,9 @@ class point:
     def z(self, value: float): self.pos[2, 0] = value
 
 class edge:
-    def __init__(self, point1pos: np.ndarray, point2pos: np.ndarray):
-        self.primary = point(point1pos[0, 0], point1pos[1, 0], point1pos[2, 0])
-        self.end = point(point2pos[0, 0], point2pos[1, 0], point2pos[2, 0])
+    def __init__(self, point1pos: np.ndarray, point2pos: np.ndarray, red: int, green: int, blue: int, alpha: float):
+        self.primary = point(point1pos[0, 0], point1pos[1, 0], point1pos[2, 0], red, green, blue, alpha)
+        self.end = point(point2pos[0, 0], point2pos[1, 0], point2pos[2, 0], red, green, blue, alpha)
         self.position = np.array([
             [1.0, 0.0, 0.0, point1pos[0][0]],
             [0.0, 1.0, 0.0, point1pos[1][0]],
@@ -202,5 +202,5 @@ class camera(point):
         px_x2 = int((screenx_end + 1.0) * screen_size[0] / 2.0)
         px_y2 = int((-screeny_end + 1.0) * screen_size[1] / 2.0)
         
-        return [(px_x1, px_y1), (px_x2, px_y2)]
+        return [(px_x1, px_y1), (px_x2, px_y2), (obj.primary.rgba[0], obj.primary.rgba[1], obj.primary.rgba[2], obj.primary.rgba[3])]
         
