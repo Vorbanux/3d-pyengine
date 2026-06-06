@@ -8,7 +8,7 @@ screen = None
 cam = None
 vertices = n.empty((0, 4), dtype=n.float32)
 edges = n.empty((0, 2), dtype=n.int32)
-faces = n.empty((0, 4), dtype=n.int32)
+faces = []
 faces_colors = n.empty((0, 4), dtype=n.int32)
 colors = n.empty((0, 4), dtype=n.int32)
 faces_lines = n.empty((0, 5), dtype=n.int32)
@@ -39,22 +39,33 @@ def face(color: list, line_color: list, line_width: int, *poses: list):
     pos = vertices.shape[0]
     
     new_verts = n.array([[float(p[0]), float(p[1]), float(p[2]), 1.0] for p in poses], dtype=n.float32)
-    
-    poly_indices = n.array([list(range(pos, pos + n_points))], dtype=n.int32)
-    
     vertices = n.vstack((vertices, new_verts))
-    faces = n.vstack((faces, poly_indices))
-    new_color = n.array([[color[0], color[1], color[2], color[3]]], dtype=n.int32)
+    
+    poly_indices = list(range(pos, pos + n_points))
+    
+    faces.append(poly_indices)
+    
+    f_alpha = color[3] if len(color) > 3 else 255
+    new_color = n.array([[color[0], color[1], color[2], f_alpha]], dtype=n.int32)
     faces_colors = n.vstack((faces_colors, new_color))
-    faces_lines = n.vstack((faces_lines, n.array([[line_color[0], line_color[1], line_color[2], line_color[3], line_width]], dtype=n.int32)))
+    
+    l_alpha = line_color[3] if len(line_color) > 3 else 255
+    
+    faces_lines = n.vstack((faces_lines, n.array([[float(line_color[0]), float(line_color[1]), float(line_color[2]), float(l_alpha), float(line_width)]], dtype=n.float32)))
 
-def cube(line_color: list, line_width: float, pos_primary: list, pos_B: list, pos_C: list, pos_D: list, pos_A1: list, pos_B1: list, pos_C1: list, pos_D1: list, color: list):
+def cube(line_color: list, line_width: float, color: list, pos_primary: list, pos_B: list, pos_C: list, pos_D: list, pos_A1: list, pos_B1: list, pos_C1: list, pos_D1: list):
     face(color, line_color, line_width, pos_primary, pos_B, pos_C, pos_D)
     face(color, line_color, line_width, pos_C, pos_D, pos_D1, pos_C1)
     face(color, line_color, line_width, pos_D, pos_primary, pos_A1, pos_D1)
     face(color, line_color, line_width, pos_primary, pos_B, pos_B1, pos_A1)
     face(color, line_color, line_width, pos_B, pos_C, pos_C1, pos_B1)
     face(color, line_color, line_width, pos_A1, pos_B1, pos_C1, pos_D1)
+
+def pyramid(line_color: list, line_width: float, color: list, pos_primary, *poses: list):
+    face(color, line_color, line_width, *poses)
+    for p in range(len(poses)):
+        next = int((p+1)%len(poses))
+        face(color, line_color, line_width, poses[next], poses[p], pos_primary)
 
 def update():
     global vertices, edges, colors, faces, faces_colors, faces_lines
@@ -74,12 +85,12 @@ def update():
         final, valid, avg = result
         if isinstance(valid, tuple):
             valid = valid[0]
-        sorted_indices = n.argsort(-avg)
+        sorted_indices = n.argsort(avg)
         for i in sorted_indices:
             original_face_idx = valid[i]
             color_rgb = tuple(faces_colors[original_face_idx, :3])
             pygame.draw.polygon(screen, color_rgb, final[i])
-            pygame.draw.polygon(screen, (int(faces_lines[original_face_idx, :3][0]), int(faces_lines[original_face_idx, :3][1]), int(faces_lines[original_face_idx, :3][2])), final[i], faces_lines[original_face_idx][4])
+            pygame.draw.polygon(screen, (int(faces_lines[original_face_idx][0]), int(faces_lines[original_face_idx][1]), int(faces_lines[original_face_idx][2])), final[i], int(faces_lines[original_face_idx][4]))
         return True
 
 def start():
@@ -93,12 +104,12 @@ def start():
         
         keys = pygame.key.get_pressed()
         
-        move_speed = 0.001
+        move_speed = 0.003
         
         d_yaw = 0.0
         d_pitch = 0.0
         
-        mouse_sensitivity = 0.0015  # Чувствительность мыши
+        mouse_sensitivity = 0.0015
         dx, dy = pygame.mouse.get_rel()
 
         move_vec = n.zeros(3, dtype=n.float32)
@@ -115,15 +126,13 @@ def start():
             sys.exit()
         
         if n.any(move_vec):
-            # Нормализуем вектор движения, чтобы скорость по диагонали не была быстрее
             move_vec = (move_vec / n.linalg.norm(move_vec)) * move_speed
-            
-            # Прибавляем смещение к координатам камеры
+
             cam.x += move_vec[0]
             cam.z += move_vec[2]
             
         if dx != 0 or dy != 0:
-            d_yaw = dx * mouse_sensitivity
+            d_yaw = -dx * mouse_sensitivity
             d_pitch = -dy * mouse_sensitivity  
             
             cam.rotate(d_yaw, d_pitch)

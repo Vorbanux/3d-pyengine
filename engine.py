@@ -68,54 +68,38 @@ class camera(point):
     def __init__(self, x: float = 0, y: float = 0, z: float = 0, cm_angle: float = 70):
         super().__init__(x, y, z, (0, 0, 255, 0))
         self.angle = cm_angle
-        
-        # Углы в радианах — это базис управления. Начальный взгляд вперед в -Z
         self._yaw = 0.0
         self._pitch = 0.0
         
-        # Сразу рассчитываем векторы
         self.update_vectors()
 
     def update_vectors(self):
-        """Пересчитывает векторы направления строго на основе углов."""
-        # Ограничиваем Pitch во избежание "гироскопического тупика"
         self._pitch = np.clip(self._pitch, np.radians(-89.0), np.radians(89.0))
-        
-        # Сферические координаты для взгляда вперед в левосторонней системе (-Z дефолт)
         look_x = np.sin(self._yaw) * np.cos(self._pitch)
         look_y = np.sin(self._pitch)
-        look_z = -np.cos(self._yaw) * np.cos(self._pitch)
+        look_z = np.cos(self._yaw) * np.cos(self._pitch)
         
         self.lookvector = np.array([look_x, look_y, look_z], dtype=np.float32)
         self.lookvector /= np.linalg.norm(self.lookvector)
         
-        # Мировой вектор Вверх
         world_up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-        
-        # Строим правый вектор (В левосторонней системе: Right = World_Up x Look)
         self.rightvector = np.cross(world_up, self.lookvector)
         self.rightvector /= np.linalg.norm(self.rightvector)
-        
-        # Строим локальный вверх (Up = Look x Right)
         self.upvector = np.cross(self.lookvector, self.rightvector)
         self.upvector /= np.linalg.norm(self.upvector)
 
     def rotate(self, delta_yaw: float, delta_pitch: float):
-        """Вращает камеру мышью, изменяя углы, и сразу обновляет векторы."""
         self._yaw += delta_yaw
         self._pitch += delta_pitch
         self.update_vectors()
 
     def _update_matrices(self):
-        """Внутренний метод обновления матриц перед проекцией."""
         self.position = np.array([
            [1.0, 0.0, 0.0, -self.pos[0, 0]],
            [0.0, 1.0, 0.0, -self.pos[1, 0]],
            [0.0, 0.0, 1.0, -self.pos[2, 0]],
            [0.0, 0.0, 0.0, 1.0]
         ], dtype=np.float32)
-        
-        # Каноническая сборка View матрицы вращения: векторы строго в СТРОКИ (ортонормированный базис)
         self.rotation = np.array([
             [self.rightvector[0], self.rightvector[1], self.rightvector[2], 0.0],
             [self.upvector[0],    self.upvector[1],    self.upvector[2],    0.0],
@@ -126,7 +110,7 @@ class camera(point):
         self.transform = self.rotation @ self.position
 
     def projection(self, data_point: np.ndarray, vertices: np.ndarray, screen_size: list) -> list:
-        self._update_matrices() # Актуализируем матрицы
+        self._update_matrices()
         
         f = 1 / np.tan(np.radians(self.angle)/2)
         aspect = screen_size[0] / screen_size[1]
@@ -190,7 +174,7 @@ class camera(point):
         return lines_start, lines_end, valid_indices
 
     def projection_faces(self, data_point: np.ndarray, vertices: np.ndarray, screen_size: list):
-        self._update_matrices() # Актуализируем матрицы
+        self._update_matrices()
         
         f = 1 / np.tan(np.radians(self.angle)/2)
         aspect = screen_size[0] / screen_size[1]
