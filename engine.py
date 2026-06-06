@@ -208,6 +208,6 @@ class camera(point):
             screen_poly = np.column_stack((scr_x, scr_y))
             final_polygons.append(screen_poly)
             valid_indices.append(face_idx)
-            avg_depths.append(np.mean(clipped_verts[:, 2]))
+            avg_depths.append(np.mean(clipped_verts[:, 3]))
             
         return final_polygons, valid_indices, np.array(avg_depths, dtype=np.float32)
