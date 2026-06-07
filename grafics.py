@@ -61,7 +61,6 @@ class face:
         poses = list(self.world_poses)[::-1]
         poses.append(primary)
         poses = poses[::-1]
-        
         n_points = len(poses)
         pos = vertices.shape[0]
         
@@ -84,10 +83,10 @@ class face:
         self.world_poses = world_location(self.primary, True, self.local_poses)
 
     @property
-    def get_location(self) -> list: return self.primary
+    def locate(self) -> list: return self.primary
     
-    @get_location.setter
-    def get_location(self, value: list): 
+    @locate.setter
+    def locate(self, value: list): 
         self.primary = value
         self.location()
 
@@ -112,16 +111,16 @@ class edge:
         self.world_end = world_location(self.primary, True, self.local_end)
 
     @property
-    def get_location(self) -> list: return self.primary
+    def locate(self) -> list: return self.primary
     
-    @get_location.setter
-    def get_location(self, value: list): 
+    @locate.setter
+    def locate(self, value: list): 
         self.primary = value
         self.location()
 
 
 class cube:
-    def __init__(self, color: list, line_color: list, line_width: int, primary: list, world_poses: list = None, local_poses: list = None):
+    def __init__(self, line_color: list, line_width: int, color: list, primary: list, world_poses: list = None, local_poses: list = None):
         self.color = color
         self.line_color = line_color
         self.line_width = line_width
@@ -166,10 +165,10 @@ class cube:
         self.world_poses = world_location(self.primary, True, self.local_poses)
 
     @property
-    def get_location(self) -> list: return self.primary
+    def locate(self) -> list: return self.primary
     
-    @get_location.setter
-    def get_location(self, value: list): 
+    @locate.setter
+    def locate(self, value: list): 
         self.primary = value
         self.location()
 
@@ -205,10 +204,10 @@ class pyramid:
         self.world_poses = world_location(self.primary, True, self.local_poses)
 
     @property
-    def get_location(self) -> list: return self.primary
+    def locate(self) -> list: return self.primary
     
-    @get_location.setter
-    def get_location(self, value: list): 
+    @locate.setter
+    def locate(self, value: list): 
         self.primary = value
         self.location()
         
@@ -282,10 +281,10 @@ class prism:
         self.world_poses = world_location(self.primary, True, self.local_poses)
 
     @property
-    def get_location(self) -> list: return self.primary
+    def locate(self) -> list: return self.primary
     
-    @get_location.setter
-    def get_location(self, value: list): 
+    @locate.setter
+    def locate(self, value: list): 
         self.primary = value
         self.location()
 
@@ -313,9 +312,9 @@ def update():
             l_width = int(faces_lines[original_face_idx, 4])
             pygame.draw.polygon(screen, l_color_rgb, final[i], l_width)
     
-        text_surface = pygame.font.SysFont(None, 24).render(f"x: {math.floor(cam.pos[0, 0]*100)/100}; y: {math.floor(cam.pos[1, 0]*100)/100}; z: {math.floor(cam.pos[2, 0]*100)/100}", True, (255, 0, 0, 1))
+        #text_surface = pygame.font.SysFont(None, 24).render(f"x: {math.floor(cam.pos[0, 0]*100)/100}; y: {math.floor(cam.pos[1, 0]*100)/100}; z: {math.floor(cam.pos[2, 0]*100)/100}", True, (255, 0, 0, 1))
 
-        screen.blit(text_surface, (100, 100))
+        #screen.blit(text_surface, (100, 100))
         return True
 
 def start():
