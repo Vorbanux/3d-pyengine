@@ -174,11 +174,121 @@ class cube:
         self.location()
 
 
-def pyramid(line_color: list, line_width: float, color: list, pos_primary: list, poses: list):
-    face(color, line_color, line_width, poses[0], poses[1:])
-    for p in range(len(poses)):
-        next = (p+1) % len(poses)
-        face(color, line_color, line_width, poses[p], (poses[next], pos_primary))
+class pyramid:
+    def __init__(self, line_color: list, line_width: float, color: list, primary: list, world_poses: list = None, local_poses: list = None):
+        
+        self.color = color
+        self.line_color = line_color
+        self.line_width = line_width
+        self.primary = primary
+        
+        if world_poses:
+            self.world_poses = world_poses
+            self.local_poses = local_location(primary, True, world_poses)
+        elif local_poses:
+
+            self.world_poses = world_location(primary, True, local_poses)
+            self.local_poses = local_poses
+        else:
+            raise ValueError("error: world_poses or local_poses must contain value: list")
+        
+        poses = list(self.world_poses)[::-1]
+        poses.append(primary)
+        poses = poses[::-1]
+        
+        face(color, line_color, line_width, poses[1], poses[1:])
+        for p in range(len(poses[1:])):
+            next = (p+1) % len(poses[1:])
+            face(color, line_color, line_width, poses[1:][p], (poses[1:][next], primary))
+        
+    def location(self): 
+        self.world_poses = world_location(self.primary, True, self.local_poses)
+
+    @property
+    def get_location(self) -> list: return self.primary
+    
+    @get_location.setter
+    def get_location(self, value: list): 
+        self.primary = value
+        self.location()
+        
+
+
+class prism:
+    def __init__(self, line_color: list, line_width: float, color: list, primary: list, world_poses: list = None, local_poses: list = None, height_vec: list = [0.0, 1.0, 0.0]):
+        
+        self.color = color
+        self.line_color = line_color
+        self.line_width = line_width
+        self.primary = primary
+
+        if world_poses:
+            bottom_layer = [list(pt) for pt in world_poses]
+            # Верхний слой = каждая точка нижнего слоя + вектор высоты
+            top_layer = [[pt[0] + height_vec[0], pt[1] + height_vec[1], pt[2] + height_vec[2]] for pt in bottom_layer]
+
+            full_world_poses = bottom_layer + top_layer
+            self.world_poses = full_world_poses
+            self.local_poses = local_location(primary, True, *full_world_poses)
+            
+        elif local_poses:
+            bottom_layer = [list(pt) for pt in local_poses]
+            top_layer = [[pt[0] + height_vec[0], pt[1] + height_vec[1], pt[2] + height_vec[2]] for pt in bottom_layer]
+            
+            full_local_poses = bottom_layer + top_layer
+            self.world_poses = world_location(primary, True, full_local_poses)
+            self.local_poses = full_local_poses
+        else:
+            raise ValueError("error: world_poses or local_poses must contain value: list")
+
+        p = self.world_poses
+        N = len(p) // 2 
+
+        bottom_indices = list(range(0, N))
+        top_indices = list(range(N, 2 * N))
+
+        bottom_verts = [p[idx] for idx in bottom_indices]
+        face(
+            color=color, 
+            line_color=line_color, 
+            line_width=line_width, 
+            primary=bottom_verts[0], 
+            world_poses=bottom_verts[1:]
+        )
+
+        top_verts = [p[idx] for idx in top_indices]
+        face(
+            color=color, 
+            line_color=line_color, 
+            line_width=line_width, 
+            primary=top_verts[0], 
+            world_poses=top_verts[1:]
+        )
+
+        for i in range(N):
+            next_i = (i + 1) % N
+            side_indices = [i, next_i, next_i + N, i + N]
+            
+            side_verts = [p[idx] for idx in side_indices]
+            face(
+                color=color, 
+                line_color=line_color, 
+                line_width=line_width, 
+                primary=side_verts[0], 
+                world_poses=side_verts[1:]
+            )
+        
+    def location(self): 
+        self.world_poses = world_location(self.primary, True, self.local_poses)
+
+    @property
+    def get_location(self) -> list: return self.primary
+    
+    @get_location.setter
+    def get_location(self, value: list): 
+        self.primary = value
+        self.location()
+
 
 
 def update():
@@ -228,6 +338,7 @@ def start():
         dx, dy = pygame.mouse.get_rel()
 
         move_vec = n.zeros(3, dtype=n.float32)
+        move_y = n.zeros(3, dtype=n.float32)
         
         if keys[pygame.K_w]:
             move_vec += cam.lookvector
@@ -237,14 +348,25 @@ def start():
             move_vec += cam.rightvector
         if keys[pygame.K_d]:
             move_vec -= cam.rightvector
+        if keys[pygame.K_e]:
+            move_y += cam.upvector
+        if keys[pygame.K_q]:
+            move_y -= cam.upvector
         if keys[pygame.K_ESCAPE]:
             sys.exit()
-        
+            
         if n.any(move_vec):
+
             move_vec = (move_vec / n.linalg.norm(move_vec)) * move_speed
 
             cam.x += move_vec[0]
             cam.z += move_vec[2]
+        
+        if n.any(move_y):
+            
+            move_y = (move_y / n.linalg.norm(move_y)) * move_speed
+            
+            cam.y += move_y[1]
             
         if dx != 0 or dy != 0:
             d_yaw = -dx * mouse_sensitivity
