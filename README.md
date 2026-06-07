@@ -81,5 +81,13 @@ g.cube(line_color=[red: int, green: int, blue: int, alpha: int], line_width: int
 g.prism(line_color=[red: int, green: int, blue: int, alpha: int], line_width: int, color=[red: int, green: int, blue: int, alpha: int], primary=[x: float, y: float, z: float], world_poses=[[x: float, y: float, z: float], [x: float, y: float, z: float], ...]=None, local_poses=[[x: float, y: float, z: float], [x: float, y: float, z: float], ...]=None)
 g.face(line_color=[red: int, green: int, blue: int, alpha: int], color=[red: int, green: int, blue: int, alpha: int], line_width: int, primary=[x: float, y: float, z: float], world_poses=[[x: float, y: float, z: float], [x: float, y: float, z: float], ...]=None, local_poses=[[x: float, y: float, z: float], [x: float, y: float, z: float], ...]=None)
 
+g.start()
+
 # primary - A point in space that is the primary point of a figure; other points are measured from it if local coordinates are entered. The point itself is always given in world coordinates. Edge is not working
+```
+*  To ensure looping and correct rendering, you need to call the start() function from the grafics.py file at the end of your code. No arguments are required.
+```python
+import grafics as g
+
+grafics.start()
 ```
