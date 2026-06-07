@@ -89,5 +89,5 @@ g.start()
 ```python
 import grafics as g
 
-grafics.start()
+g.start()
 ```
